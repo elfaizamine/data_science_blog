@@ -39,7 +39,7 @@ baseurl: "/data_science_blog" # the subpath of your site, e.g. "/blog".
 # Github and twitter are optional:
 minima:
   social_links:
-    linkedin: in/amine-el-faiz-622909100
+    linkedin: amine-el-faiz-622909100
     github: elfaizamine
 
 # Set this to true to get LaTeX math equation support
