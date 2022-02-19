@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Feature Engineering: Website Categorization | The Data Science Blog</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Feature Engineering: Website Categorization" />
+<meta name="author" content="Amine EL FAIZ" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Classify websites urls into categories." />
+<meta property="og:description" content="Classify websites urls into categories." />
+<link rel="canonical" href="https://elfaizamine.github.io/data_science_blog/website%20categorization/bart/zero-shot%20learning/web2vec/text%20encoding/2022/01/05/Websites-Categorization.html" />
+<meta property="og:url" content="https://elfaizamine.github.io/data_science_blog/website%20categorization/bart/zero-shot%20learning/web2vec/text%20encoding/2022/01/05/Websites-Categorization.html" />
+<meta property="og:site_name" content="The Data Science Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-05T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Feature Engineering: Website Categorization" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Amine EL FAIZ"},"dateModified":"2022-01-05T00:00:00-06:00","datePublished":"2022-01-05T00:00:00-06:00","description":"Classify websites urls into categories.","headline":"Feature Engineering: Website Categorization","mainEntityOfPage":{"@type":"WebPage","@id":"https://elfaizamine.github.io/data_science_blog/website%20categorization/bart/zero-shot%20learning/web2vec/text%20encoding/2022/01/05/Websites-Categorization.html"},"url":"https://elfaizamine.github.io/data_science_blog/website%20categorization/bart/zero-shot%20learning/web2vec/text%20encoding/2022/01/05/Websites-Categorization.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/data_science_blog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://elfaizamine.github.io/data_science_blog/feed.xml" title="The Data Science Blog" /><link rel="shortcut icon" type="image/x-icon" href="/data_science_blog/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/data_science_blog/">The Data Science Blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/data_science_blog/about/">About Me</a><a class="page-link" href="/data_science_blog/search/">Search</a><a class="page-link" href="/data_science_blog/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Feature Engineering: Website Categorization</h1><p class="page-description">Classify websites urls into categories.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-05T00:00:00-06:00" itemprop="datePublished">
+        Jan 5, 2022
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">Amine EL FAIZ</span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      8 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/data_science_blog/categories/#Website Categorization">Website Categorization</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/data_science_blog/categories/#Bart">Bart</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/data_science_blog/categories/#Zero-shot Learning">Zero-shot Learning</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/data_science_blog/categories/#web2vec">web2vec</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/data_science_blog/categories/#text encoding">text encoding</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/elfaizamine/data_science_blog/tree/master/_notebooks/2022-01-05-Websites-Categorization.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/data_science_blog/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/elfaizamine/data_science_blog/blob/master/_notebooks/2022-01-05-Websites-Categorization.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/data_science_blog/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h1"><a href="#Context">Context </a></li>
+<li class="toc-entry toc-h1"><a href="#Load-Librairies">Load Librairies </a></li>
+<li class="toc-entry toc-h1"><a href="#Websites-Scraping">Websites Scraping </a></li>
+<li class="toc-entry toc-h1"><a href="#Input-and-Output-Definition">Input and Output Definition </a></li>
+<li class="toc-entry toc-h1"><a href="#Classes-Prediction">Classes Prediction </a></li>
+<li class="toc-entry toc-h1"><a href="#Conclusion">Conclusion </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-05-Websites-Categorization.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Context">
+<a class="anchor" href="#Context" aria-hidden="true"><span class="octicon octicon-link"></span></a>Context<a class="anchor-link" href="#Context"> </a>
+</h1>
+<p>The goal of this project is websites categorization which refers to the process of classifying websites into various categories based on their content and purpose. For example amazon website can be classified into e-commerce category.</p>
+<p>Website categorization either manually or by using machine learning algorithms can be useful in many areas:</p>
+<ul>
+<li>Content filtering: blocking certain websites dependent on their categories from access by certain users.</li>
+<li>Contextual Marketing: Allows businesses to display ads on pages that are similar or relevant to the product or service they offer.</li>
+<li>Brand protection: Looking for copycat websites that are similar to yours but harm your brand.</li>
+<li>Text Data Encoding: Transform websites text data into vectors that have meaning like a website embedding vector and websites with similar purpose have close vectors.</li>
+</ul>
+<p>I have come across this project when trying to encode websites text data into vectors in order to train a machine learning model on those vectors.One of the ways is to classify each website into a set of categories either by probability or classes.
+The advantage of using this method besides the vectorization is :</p>
+<ul>
+<li>we can sum up multiple vectors and the result would meaningful for example in case of a user visdited a series of websites and we want to encode this sequence of visits.</li>
+<li>if a machine learning model is trained on these categories we can interpret the results by doing feature importance.</li>
+</ul>
+<p>To obtain this objective the process of transformation is as follows:</p>
+<ul>
+<li>Scrap from websites urls text data.</li>
+<li>Define the categories that will define the content of each website.</li>
+<li>Predict the probability that the scraped text belongs to each of the defined categories using pretrained Bart Model.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Load-Librairies">
+<a class="anchor" href="#Load-Librairies" aria-hidden="true"><span class="octicon octicon-link"></span></a>Load Librairies<a class="anchor-link" href="#Load-Librairies"> </a>
+</h1>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoModel</span><span class="p">,</span> <span class="n">AutoTokenizer</span> 
+<span class="kn">import</span> <span class="nn">cloudscraper</span>
+<span class="kn">from</span> <span class="nn">bs4</span> <span class="kn">import</span> <span class="n">BeautifulSoup</span>
+<span class="kn">from</span> <span class="nn">googletrans</span> <span class="kn">import</span> <span class="n">Translator</span>
+<span class="kn">from</span> <span class="nn">tldextract</span> <span class="kn">import</span> <span class="n">extract</span>
+<span class="kn">import</span> <span class="nn">transformers</span>
+<span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">pipeline</span>
+<span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoModel</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span> <span class="nn">googletrans</span> <span class="kn">import</span> <span class="n">Translator</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">bs4</span> <span class="kn">import</span> <span class="n">BeautifulSoup</span>
+<span class="kn">from</span> <span class="nn">tldextract</span> <span class="kn">import</span> <span class="n">extract</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">'ignore'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Websites-Scraping">
+<a class="anchor" href="#Websites-Scraping" aria-hidden="true"><span class="octicon octicon-link"></span></a>Websites Scraping<a class="anchor-link" href="#Websites-Scraping"> </a>
+</h1>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description" open="">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Function that will scrapp a desired website</span>
+<span class="k">def</span> <span class="nf">scrap_website</span><span class="p">(</span><span class="n">scraper</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">website_name</span><span class="p">,</span> <span class="n">text_size</span><span class="p">):</span>
+    <span class="n">allthecontent</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">scraper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">website_name</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+        <span class="n">soup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="s1">'html.parser'</span><span class="p">)</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">'title'</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="n">description</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">'meta'</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'name'</span><span class="p">:</span> <span class="s1">'description'</span><span class="p">})</span>
+        <span class="k">if</span> <span class="s2">"content"</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">description</span><span class="p">):</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="n">description</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"content"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="n">h1</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">'h1'</span><span class="p">)</span>
+        <span class="n">h1_all</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">h1</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">h1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">h1_all</span> <span class="o">=</span> <span class="n">h1_all</span> <span class="o">+</span> <span class="n">h1</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">h1_all</span> <span class="o">=</span> <span class="n">h1_all</span> <span class="o">+</span> <span class="n">h1</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">text</span> <span class="o">+</span> <span class="s2">". "</span>
+        <span class="n">paragraphs_all</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="n">paragraphs</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">'p'</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">paragraphs</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">paragraphs</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">paragraphs_all</span> <span class="o">=</span> <span class="n">paragraphs_all</span> <span class="o">+</span> <span class="n">paragraphs</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">paragraphs_all</span> <span class="o">=</span> <span class="n">paragraphs_all</span> <span class="o">+</span> <span class="n">paragraphs</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">text</span> <span class="o">+</span> <span class="s2">". "</span>
+        <span class="n">h2</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">'h2'</span><span class="p">)</span>
+        <span class="n">h2_all</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">h2</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">h2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">h2_all</span> <span class="o">=</span> <span class="n">h2_all</span> <span class="o">+</span> <span class="n">h2</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">h2_all</span> <span class="o">=</span> <span class="n">h2_all</span> <span class="o">+</span> <span class="n">h2</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">text</span> <span class="o">+</span> <span class="s2">". "</span>
+        <span class="n">h3</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">'h3'</span><span class="p">)</span>
+        <span class="n">h3_all</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">h3</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">h3</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">h3_all</span> <span class="o">=</span> <span class="n">h3_all</span> <span class="o">+</span> <span class="n">h3</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">h3_all</span> <span class="o">=</span> <span class="n">h3_all</span> <span class="o">+</span> <span class="n">h3</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">text</span> <span class="o">+</span> <span class="s2">". "</span>
+        <span class="n">allthecontent</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">title</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">description</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">h1_all</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">h2_all</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span>
+            <span class="n">h3_all</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">paragraphs_all</span><span class="p">)</span>
+        <span class="n">allthecontent</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">allthecontent</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="n">text_size</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">allthecontent</span>
+
+<span class="k">def</span> <span class="nf">translate_sentence</span><span class="p">(</span><span class="n">translator</span><span class="p">,</span> <span class="n">sentence</span><span class="p">,</span> <span class="n">text_size</span><span class="p">):</span>
+    <span class="n">translation</span> <span class="o">=</span> <span class="n">translator</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span>
+    <span class="n">translation</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">translation</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="n">text_size</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">translation</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+    </details>
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Scarp websites and translate words for non english websites</span>
+<span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">()</span> 
+<span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'user-agent'</span><span class="p">:</span> <span class="s1">'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'</span><span class="p">}</span>
+<span class="n">translator</span> <span class="o">=</span> <span class="n">Translator</span><span class="p">()</span>
+
+<span class="c1"># Example of Amazon</span>
+<span class="n">website_name</span> <span class="o">=</span> <span class="s1">'https://www.amazon.com'</span>
+<span class="n">website_content</span> <span class="o">=</span> <span class="n">scrap_website</span><span class="p">(</span><span class="n">scraper</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">website_name</span><span class="p">,</span> <span class="n">text_size</span> <span class="o">=</span> <span class="mi">700</span><span class="p">)</span>
+<span class="n">website_content_en</span> <span class="o">=</span> <span class="n">translate_sentence</span><span class="p">(</span><span class="n">translator</span><span class="p">,</span> <span class="n">website_content</span><span class="p">,</span> <span class="n">text_size</span><span class="o">=</span> <span class="mi">700</span><span class="p">)</span>
+<span class="n">website_content_en</span> <span class="o">=</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">'[a-z]+'</span><span class="p">,</span> <span class="n">website_content</span><span class="o">.</span><span class="n">lower</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'The Scraped Text after cleaning and english translation of:'</span><span class="p">,</span> <span class="n">website_name</span><span class="p">,</span> <span class="s1">'is:'</span><span class="p">,</span><span class="n">website_content</span><span class="p">)</span>
+
+<span class="c1"># Example of youtube</span>
+<span class="n">website_name</span> <span class="o">=</span> <span class="s1">'https://www.youtube.com'</span>
+<span class="n">website_content</span> <span class="o">=</span> <span class="n">scrap_website</span><span class="p">(</span><span class="n">scraper</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">website_name</span><span class="p">,</span> <span class="n">text_size</span> <span class="o">=</span> <span class="mi">700</span><span class="p">)</span>
+<span class="n">website_content_en</span> <span class="o">=</span> <span class="n">translate_sentence</span><span class="p">(</span><span class="n">translator</span><span class="p">,</span> <span class="n">website_content</span><span class="p">,</span> <span class="n">text_size</span> <span class="o">=</span> <span class="mi">700</span><span class="p">)</span>
+<span class="n">website_content_en</span> <span class="o">=</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">'[a-z]+'</span><span class="p">,</span> <span class="n">website_content</span><span class="o">.</span><span class="n">lower</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'The Scraped Text after cleaning and english translation of:'</span><span class="p">,</span> <span class="n">website_name</span><span class="p">,</span> <span class="s1">'is:'</span><span class="p">,</span><span class="n">website_content</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>The Scraped Text after cleaning and english translation of: https://www.amazon.com is: Amazon.com. Spend less. Smile more. Free shipping on millions of items. Get the best of Shopping and Entertainment with Prime. Enjoy low prices and great deals on the largest selection of everyday essentials and other products, including fashion, home, beauty, electronics, Alexa Devices, sporting goods, toys, automotive, pets, baby, books, video games, musical instruments, office supplies, and more.  Sign in for the best experience. Explore Departments  
+The Scraped Text after cleaning and english translation of: https://www.youtube.com is: YouTube Share your videos with friends, family, and the world    
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Input-and-Output-Definition">
+<a class="anchor" href="#Input-and-Output-Definition" aria-hidden="true"><span class="octicon octicon-link"></span></a>Input and Output Definition<a class="anchor-link" href="#Input-and-Output-Definition"> </a>
+</h1>
+<p>We will define the categories that the bart model will choose from and the websites we want to classify:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># websites to classify</span>
+<span class="n">websites</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'amazon.com'</span><span class="p">,</span><span class="s1">'instagram.com'</span><span class="p">,</span><span class="s1">'wikipedia.org'</span><span class="p">,</span><span class="s1">'netflix.com'</span><span class="p">,</span><span class="s1">'facebook.com'</span><span class="p">,</span><span class="s1">'google.com'</span><span class="p">,</span><span class="s1">'yahoo.com'</span><span class="p">]</span>
+<span class="c1"># Categories from bart model to choose from and to labelize each website base on front page content</span>
+<span class="n">candidate_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'health'</span><span class="p">,</span><span class="s1">'e-commerce'</span><span class="p">,</span><span class="s1">'advertising'</span><span class="p">,</span> <span class="s1">'job'</span><span class="p">,</span><span class="s1">'computer'</span><span class="p">,</span><span class="s1">'education'</span><span class="p">,</span><span class="s1">'entertainment'</span><span class="p">,</span>\
+                            <span class="s1">'home and family'</span><span class="p">,</span><span class="s1">'industry'</span><span class="p">,</span><span class="s1">'Information Technology'</span><span class="p">,</span><span class="s1">'search engine'</span><span class="p">,</span>\
+                            <span class="s1">'social network'</span><span class="p">,</span><span class="s1">'science'</span><span class="p">,</span><span class="s1">'news and media'</span><span class="p">,</span><span class="s1">'read'</span><span class="p">,</span> <span class="s1">'buisness'</span><span class="p">]</span>
+<span class="c1"># Tabular DataFrame containing vectors</span>
+<span class="n">web2vec</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">websites</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">'website_url'</span><span class="p">])</span>
+<span class="n">web2vec</span><span class="p">[</span><span class="n">candidate_labels</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Classes-Prediction">
+<a class="anchor" href="#Classes-Prediction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Classes Prediction<a class="anchor-link" href="#Classes-Prediction"> </a>
+</h1>
+<p>For further learning about the facebook Bart Classification Model, refer to this <a href="https://huggingface.co/facebook/bart-large-mnli">link</a>.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Initialise Bart model that will transform website to useful encoding</span>
+<span class="c1"># Needs Internet Connection Must be downloaded before </span>
+<span class="n">model_name</span> <span class="o">=</span> <span class="s2">"facebook/bart-large-mnli"</span> 
+<span class="c1"># Download pytorch model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+<span class="c1"># Load Bert Zero shot classification model</span>
+<span class="n">classifier</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">(</span><span class="s2">"zero-shot-classification"</span><span class="p">,</span>
+                      <span class="n">model</span><span class="o">=</span><span class="s2">"facebook/bart-large-mnli"</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Output" data-close="Show Output"></summary>
+        <p>
+</p>
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>Some weights of the model checkpoint at facebook/bart-large-mnli were not used when initializing BartModel: ['classification_head.out_proj.weight', 'classification_head.dense.bias', 'classification_head.out_proj.bias', 'classification_head.dense.weight']
+- This IS expected if you are initializing BartModel from the checkpoint of a model trained on another task or with another architecture (e.g. initializing a BertForSequenceClassification model from a BertForPreTraining model).
+- This IS NOT expected if you are initializing BartModel from the checkpoint of a model that you expect to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+    </details>
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Categorization Prediction of amazon website</span>
+<span class="n">website_name</span> <span class="o">=</span> <span class="s1">'https://www.amazon.com'</span>
+<span class="n">website_content</span> <span class="o">=</span> <span class="n">scrap_website</span><span class="p">(</span><span class="n">scraper</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">website_name</span><span class="p">,</span> <span class="n">text_size</span> <span class="o">=</span> <span class="mi">700</span><span class="p">)</span>
+<span class="n">website_content_en</span> <span class="o">=</span> <span class="n">translate_sentence</span><span class="p">(</span><span class="n">translator</span><span class="p">,</span> <span class="n">website_content</span><span class="p">,</span> <span class="n">text_size</span><span class="o">=</span> <span class="mi">700</span><span class="p">)</span>
+<span class="n">website_content_en</span> <span class="o">=</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">'[a-z]+'</span><span class="p">,</span> <span class="n">website_content</span><span class="o">.</span><span class="n">lower</span><span class="p">()))</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">classifier</span><span class="p">(</span><span class="n">website_content_en</span><span class="p">,</span> <span class="n">candidate_labels</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+<span class="c1"># The top probability class prediction is e-commerce which is correct.</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{'sequence': 'amazon com spend less smile more free shipping on millions of items get the best of shopping and entertainment with prime enjoy low prices and great deals on the largest selection of everyday essentials and other products including fashion home beauty electronics alexa devices sporting goods toys automotive pets baby books video games musical instruments office supplies and more sign in for the best experience explore departments', 'labels': ['e-commerce', 'entertainment', 'read', 'buisness', 'home and family', 'industry', 'search engine', 'advertising', 'job', 'computer', 'health', 'social network', 'science', 'Information Technology', 'education', 'news and media'], 'scores': [0.601190447807312, 0.1486208140850067, 0.09820207953453064, 0.037607591599226, 0.033550821244716644, 0.02008289285004139, 0.0157319363206625, 0.014724561013281345, 0.008524124510586262, 0.006259399000555277, 0.0036483018193393946, 0.0029156305827200413, 0.002454340225085616, 0.002257096115499735, 0.0021261561196297407, 0.0021038008853793144]}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># the encode_websites function group all steps defined earlier to makje a classification</span>
+<span class="c1"># Apply the pipeline on websites defined earlier</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">web2vec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="n">webList</span> <span class="o">=</span> <span class="n">web2vec</span><span class="o">.</span><span class="n">website_url</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Website url'</span><span class="p">,</span> <span class="n">webList</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="s1">'is classifying'</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">encode_websites</span><span class="p">(</span><span class="n">classifier</span><span class="p">,</span> <span class="n">scraper</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span><span class="n">translator</span><span class="p">,</span> <span class="n">website_name</span> <span class="o">=</span> <span class="n">webList</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">text_size</span> <span class="o">=</span> <span class="mi">500</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">output</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">web2vec</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">output</span><span class="p">[</span><span class="s1">'labels'</span><span class="p">][:</span><span class="mi">3</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">output</span><span class="p">[</span><span class="s1">'scores'</span><span class="p">][:</span><span class="mi">3</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">pass</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Website url amazon.com is classifying
+Website url instagram.com is classifying
+Website url wikipedia.org is classifying
+Website url netflix.com is classifying
+Website url facebook.com is classifying
+Website url google.com is classifying
+Website url yahoo.com is classifying
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">web2vec</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">web2vec</span><span class="p">[</span><span class="s1">'First_Category'</span><span class="p">]</span> <span class="o">=</span> <span class="n">web2vec</span><span class="p">[</span><span class="n">candidate_labels</span><span class="p">]</span><span class="o">.</span><span class="n">idxmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">web2vec</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>website_url</th>
+      <th>health</th>
+      <th>e-commerce</th>
+      <th>advertising</th>
+      <th>job</th>
+      <th>computer</th>
+      <th>education</th>
+      <th>entertainment</th>
+      <th>home and family</th>
+      <th>industry</th>
+      <th>Information Technology</th>
+      <th>search engine</th>
+      <th>social network</th>
+      <th>science</th>
+      <th>news and media</th>
+      <th>read</th>
+      <th>buisness</th>
+      <th>First_Category</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>amazon.com</td>
+      <td>0.0</td>
+      <td>0.60119</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.148621</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.098202</td>
+      <td>0.000000</td>
+      <td>e-commerce</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>instagram.com</td>
+      <td>0.0</td>
+      <td>0.00000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.060560</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.037541</td>
+      <td>0.000000</td>
+      <td>0.820056</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>social network</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>wikipedia.org</td>
+      <td>0.0</td>
+      <td>0.00000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.140716</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.304423</td>
+      <td>0.101517</td>
+      <td>read</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>netflix.com</td>
+      <td>0.0</td>
+      <td>0.00000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.295736</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.169300</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.179663</td>
+      <td>0.000000</td>
+      <td>entertainment</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>facebook.com</td>
+      <td>0.0</td>
+      <td>0.00000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.069929</td>
+      <td>0.000000</td>
+      <td>0.766960</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.071046</td>
+      <td>0.000000</td>
+      <td>social network</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>google.com</td>
+      <td>0.0</td>
+      <td>0.00000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.035699</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.796762</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.046734</td>
+      <td>0.000000</td>
+      <td>search engine</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>yahoo.com</td>
+      <td>0.0</td>
+      <td>0.00000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.264117</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.256435</td>
+      <td>0.134424</td>
+      <td>0.000000</td>
+      <td>search engine</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Conclusion">
+<a class="anchor" href="#Conclusion" aria-hidden="true"><span class="octicon octicon-link"></span></a>Conclusion<a class="anchor-link" href="#Conclusion"> </a>
+</h1>
+<p>The project implemented in this notebook attempts to tackle the problem of encoding website urls into numeric data which is very useful in a lot of machine learning problems.
+Another way to approach the problem is to keep the first part of scraping websites but to apply word embeddings on the text sequence instead of a bert model.Those embeddings can be summed to vectorize the website urls and map each website to a vector. The drawback of this method is the inability of using those vectors with a classical machine learning model like random forest since generaly the pretrained word embeddings can have large dimensions at least 50 an that data can be useful in training a deep learning model like LSTMs on those vectors.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="elfaizamine/data_science_blog"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/data_science_blog/website%20categorization/bart/zero-shot%20learning/web2vec/text%20encoding/2022/01/05/Websites-Categorization.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/data_science_blog/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/data_science_blog/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/data_science_blog/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p></p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/elfaizamine" target="_blank" title="elfaizamine"><svg class="svg-icon grey"><use xlink:href="/data_science_blog/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://www.linkedin.com/in/amine-el-faiz-622909100" target="_blank" title="amine-el-faiz-622909100"><svg class="svg-icon grey"><use xlink:href="/data_science_blog/assets/minima-social-icons.svg#linkedin"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
