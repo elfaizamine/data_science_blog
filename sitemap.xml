@@ -1,20 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
-<loc>https://elfaizamine.github.io/data_science_blog/jupyter/2020/02/20/test.html</loc>
-<lastmod>2020-02-20T00:00:00-06:00</lastmod>
-</url>
-<url>
 <loc>https://elfaizamine.github.io/data_science_blog/genetic%20algorithm/backpropagation/gradient%20descent/neural%20network/2020/05/20/train-ann-using-genetic-algorithm.html</loc>
 <lastmod>2020-05-20T00:00:00-05:00</lastmod>
 </url>
 <url>
 <loc>https://elfaizamine.github.io/data_science_blog/website%20categorization/bart/zero-shot%20learning/web2vec/text%20encoding/2022/01/05/Websites-Categorization.html</loc>
 <lastmod>2022-01-05T00:00:00-06:00</lastmod>
-</url>
-<url>
-<loc>https://elfaizamine.github.io/data_science_blog/fastpages/jupyter/2023/01/01/tt.html</loc>
-<lastmod>2023-01-01T00:00:00-06:00</lastmod>
 </url>
 <url>
 <loc>https://elfaizamine.github.io/data_science_blog/about/</loc>
