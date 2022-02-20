@@ -6,6 +6,27 @@
 
 /*-----------------------------------*/
 /*----- ADD YOUR STYLES BELOW -------*/
+.site-header {
+  border-top: 1px solid $border-color-01;
+  border-bottom: 1px solid $border-color-01;
+  min-height: $spacing-unit * 1.865;
+  line-height: $base-line-height * $base-font-size * 3.25;
+  background:url("https://i.ibb.co/44G94V9/diagram.png");
+  
+  // Positioning context for the mobile navigation icon
+  position: relative;
+}
+.page-content {
+    padding: 0px 0;
+    flex: 1 0 auto;
+}
+
+.site-title, .site-title:visited {
+    color: #fafbfc;
+}
+.page-link, .page-link:visited {
+    color: #fafbfc;
+}
 
 // If you want to turn off dark background for syntax highlighting, comment or delete the below line.
 @import "minima/fastpages-dracula-highlight"; 
